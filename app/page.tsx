@@ -235,7 +235,7 @@ export default function Home() {
                 </div>
               </div>
             ))}
-            {filteredTodos.length === 0 && <div className="text-center py-8 text-gray-500">暂无待办事项</div>}
+            {filteredTodos.length === 0 && <div className="text-center py-8 text-gray-500">暂没有待办事项~</div>}
           </div>
         </div>
       </div>
