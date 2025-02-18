@@ -1,12 +1,12 @@
 import React from 'react';
 import { Form, Select, InputNumber, Space, Button, Divider } from 'antd';
+import type { MouseEvent } from 'react';
 import { alarmSounds } from '../config/sounds';
 
 interface SettingsProps {
   pomodoroTime: number;
   shortBreakTime: number;
   longBreakTime: number;
-<<<<<<< HEAD
   onPomodoroTimeChange: (time: number | null) => void;
   onShortBreakTimeChange: (time: number | null) => void;
   onLongBreakTimeChange: (time: number | null) => void;
@@ -14,15 +14,6 @@ interface SettingsProps {
   alarmDuration: number;
   onAlarmSoundChange: (sound: string) => void;
   onAlarmDurationChange: (duration: number | null) => void;
-=======
-  onPomodoroTimeChange: (time: number) => void;
-  onShortBreakTimeChange: (time: number) => void;
-  onLongBreakTimeChange: (time: number) => void;
-  alarmSound: string;
-  alarmDuration: number;
-  onAlarmSoundChange: (sound: string) => void;
-  onAlarmDurationChange: (duration: number) => void;
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 }
 
 const Settings: React.FC<SettingsProps> = ({
@@ -82,7 +73,7 @@ const Settings: React.FC<SettingsProps> = ({
                   <Button
                     type="link"
                     size="small"
-                    onClick={(e) => {
+                    onClick={(e: MouseEvent) => {
                       e.stopPropagation();
                       playSound(sound.url);
                     }}

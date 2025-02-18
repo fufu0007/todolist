@@ -25,27 +25,17 @@ export const calculateDailyStats = (
   const end = getDateEnd(date);
 
   const dayTodos = todos.filter(todo => {
-<<<<<<< HEAD
     const todoDate = todo.dueDate ? new Date(todo.dueDate) : null;
-=======
-    const todoDate = todo.reminder ? new Date(todo.reminder) : null;
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     return todoDate && todoDate >= start && todoDate <= end;
   });
 
   return {
     date: date.toISOString().split('T')[0],
-<<<<<<< HEAD
     focusMinutes: focusMinutes,
     completedTasks: dayTodos.filter(t => t.completed).length,
     totalTasks: dayTodos.length,
     sessions: 0, // 暂时设置为 0，后续可以从实际数据中获取
     goalAchieved: false // 暂时设置为 false，后续可以根据实际目标完成情况设置
-=======
-    completedTasks: dayTodos.filter(t => t.completed).length,
-    totalTasks: dayTodos.length,
-    focusTime: focusMinutes
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   };
 };
 
@@ -82,11 +72,7 @@ export const calculateStats = (
         rate: todayStats.totalTasks === 0 ? 0 :
           (todayStats.completedTasks / todayStats.totalTasks) * 100
       },
-<<<<<<< HEAD
       focusTime: todayStats.focusMinutes,
-=======
-      focusTime: todayStats.focusTime,
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
       trend
     },
     weekly: weeklyStats

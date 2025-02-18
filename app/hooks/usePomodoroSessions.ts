@@ -1,9 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { PomodoroSession } from '../types/pomodoro';
-<<<<<<< HEAD
 import { usePomodoroState } from './usePomodoroState';
-=======
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
 export const usePomodoroSessions = () => {
   const [sessions, setSessions] = useState<PomodoroSession[]>(() => {
@@ -21,27 +18,33 @@ export const usePomodoroSessions = () => {
   }, [sessions]);
 
   const handlePomodoroComplete = useCallback((minutes: number) => {
-    setFocusMinutes(prev => prev + minutes);
+    // 处理番茄钟完成事件
+    console.log('Pomodoro completed:', minutes);
   }, []);
 
   const handleSessionComplete = useCallback((session: PomodoroSession) => {
     setSessions(prev => [...prev, session]);
   }, []);
 
-  const getSessionsByDate = useCallback((date: string) => {
-    return sessions.filter(session => 
-      new Date(session.startTime).toDateString() === new Date(date).toDateString()
-    );
+  const getSessionsByDate = useCallback((date: Date) => {
+    return sessions.filter(session => {
+      const sessionDate = new Date(session.startTime);
+      return (
+        sessionDate.getFullYear() === date.getFullYear() &&
+        sessionDate.getMonth() === date.getMonth() &&
+        sessionDate.getDate() === date.getDate()
+      );
+    });
   }, [sessions]);
 
-  const getTotalFocusTime = useCallback((date?: string) => {
-    if (date) {
-      return getSessionsByDate(date).reduce((total, session) => 
-        total + session.duration, 0
-      );
-    }
-    return sessions.reduce((total, session) => total + session.duration, 0);
-  }, [sessions, getSessionsByDate]);
+  const getTotalFocusTime = useCallback((sessions: PomodoroSession[]) => {
+    return sessions.reduce((total, session) => {
+      if (session.completed && session.type === 'focus') {
+        return total + session.duration;
+      }
+      return total;
+    }, 0);
+  }, []);
 
   return {
     sessions,

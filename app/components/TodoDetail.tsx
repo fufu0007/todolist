@@ -11,15 +11,11 @@ interface TodoDetailProps {
 }
 
 export default function TodoDetail({ todo, onClose, onUpdate }: TodoDetailProps) {
-<<<<<<< HEAD
   const [editedTodo, setEditedTodo] = useState<Todo>({
     ...todo,
     subTasks: todo.subTasks || [],
     tags: todo.tags || []
   });
-=======
-  const [editedTodo, setEditedTodo] = useState<Todo>(todo);
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   const [newSubTask, setNewSubTask] = useState('');
   const [newTag, setNewTag] = useState('');
 
@@ -28,16 +24,12 @@ export default function TodoDetail({ todo, onClose, onUpdate }: TodoDetailProps)
       const subTask: SubTask = {
         id: Date.now().toString(),
         title: newSubTask,
-<<<<<<< HEAD
         completed: false,
         createdAt: new Date().toISOString()
-=======
-        completed: false
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
       };
       setEditedTodo({
         ...editedTodo,
-        subTasks: [...editedTodo.subTasks, subTask]
+        subTasks: [...(editedTodo.subTasks || []), subTask]
       });
       setNewSubTask('');
     }
@@ -46,17 +38,17 @@ export default function TodoDetail({ todo, onClose, onUpdate }: TodoDetailProps)
   const toggleSubTask = (subTaskId: string) => {
     setEditedTodo({
       ...editedTodo,
-      subTasks: editedTodo.subTasks.map(st =>
+      subTasks: (editedTodo.subTasks || []).map(st =>
         st.id === subTaskId ? { ...st, completed: !st.completed } : st
       )
     });
   };
 
   const addTag = () => {
-    if (newTag.trim() && !editedTodo.tags.includes(newTag.trim())) {
+    if (newTag.trim() && !(editedTodo.tags || []).includes(newTag.trim())) {
       setEditedTodo({
         ...editedTodo,
-        tags: [...editedTodo.tags, newTag.trim()]
+        tags: [...(editedTodo.tags || []), newTag.trim()]
       });
       setNewTag('');
     }
@@ -65,7 +57,7 @@ export default function TodoDetail({ todo, onClose, onUpdate }: TodoDetailProps)
   const removeTag = (tag: string) => {
     setEditedTodo({
       ...editedTodo,
-      tags: editedTodo.tags.filter(t => t !== tag)
+      tags: (editedTodo.tags || []).filter(t => t !== tag)
     });
   };
 
@@ -135,7 +127,7 @@ export default function TodoDetail({ todo, onClose, onUpdate }: TodoDetailProps)
               </button>
             </div>
             <div className="space-y-2">
-              {editedTodo.subTasks.map(subTask => (
+              {(editedTodo.subTasks || []).map(subTask => (
                 <div key={subTask.id} className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -174,7 +166,7 @@ export default function TodoDetail({ todo, onClose, onUpdate }: TodoDetailProps)
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {editedTodo.tags.map(tag => (
+              {(editedTodo.tags || []).map(tag => (
                 <span
                   key={tag}
                   className="px-3 py-1 bg-gray-100 rounded-full text-sm flex items-center gap-1"

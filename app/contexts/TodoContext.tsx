@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import type { Todo } from '../types/todo';
+import type { Todo, TodoInput } from '../types/todo';
 import type { PomodoroSession } from '../types/pomodoro';
 
 interface TodoState {
@@ -22,13 +22,12 @@ type TodoAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null };
 
-<<<<<<< HEAD
 interface TodoContextValue {
   todos: Todo[];
   sessions: PomodoroSession[];
   isLoading: boolean;
   error: string | null;
-  addTodo: (todoData: Omit<Todo, 'id' | 'order' | 'createdAt' | 'deleted'>) => void;
+  addTodo: (todoData: TodoInput) => void;
   updateTodo: (id: string, data: Partial<Todo>) => void;
   deleteTodo: (id: string) => void;
   restoreTodo: (id: string) => void;
@@ -36,8 +35,6 @@ interface TodoContextValue {
   addSession: (session: Omit<PomodoroSession, 'id'>) => void;
 }
 
-=======
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 const initialState: TodoState = {
   todos: [],
   sessions: [],
@@ -128,14 +125,7 @@ function todoReducer(state: TodoState, action: TodoAction): TodoState {
   }
 }
 
-<<<<<<< HEAD
 const TodoContext = createContext<TodoContextValue | undefined>(undefined);
-=======
-const TodoContext = createContext<{
-  state: TodoState;
-  dispatch: React.Dispatch<TodoAction>;
-} | undefined>(undefined);
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
 export function TodoProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(todoReducer, initialState);
@@ -174,38 +164,21 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.todos, state.sessions, state.isLoading]);
 
-<<<<<<< HEAD
   const value: TodoContextValue = {
-=======
-  const value = {
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     todos: state.todos,
     sessions: state.sessions,
     isLoading: state.isLoading,
     error: state.error,
-<<<<<<< HEAD
-    addTodo: useCallback((todoData: Omit<Todo, 'id' | 'order' | 'createdAt' | 'deleted'>) => {
+    addTodo: useCallback((todoData: TodoInput) => {
       const newTodo: Todo = {
         ...todoData,
         id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
         deleted: false,
         order: state.todos.length
       };
       dispatch({ type: 'ADD_TODO', payload: newTodo });
     }, [state.todos.length]),
-=======
-    addTodo: useCallback((todoData: Omit<Todo, 'id' | 'createdAt' | 'completed' | 'deleted'>) => {
-      const newTodo: Todo = {
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        completed: false,
-        deleted: false,
-        ...todoData
-      };
-      dispatch({ type: 'ADD_TODO', payload: newTodo });
-    }, []),
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     updateTodo: useCallback((id: string, data: Partial<Todo>) => {
       dispatch({ type: 'UPDATE_TODO', payload: { id, data } });
     }, []),

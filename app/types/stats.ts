@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 export type Priority = 'high' | 'medium' | 'low';
 
-=======
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 export interface TimeRange {
   start: Date;
   end: Date;

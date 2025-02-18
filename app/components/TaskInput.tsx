@@ -2,10 +2,10 @@
 
 import React, { useState, useRef } from 'react';
 import { Plus, AlertTriangle, Clock, ArrowDown, Tags } from 'lucide-react';
-import type { Todo } from '../types/todo';
+import type { Todo, TodoInput } from '../types/todo';
 
 interface TaskInputProps {
-  onAddTodo: (todo: Omit<Todo, 'id' | 'order' | 'createdAt' | 'deleted'>) => void;
+  onAddTodo: (todo: TodoInput) => void;
 }
 
 const TaskInput = ({ onAddTodo }: TaskInputProps) => {
@@ -34,11 +34,14 @@ const TaskInput = ({ onAddTodo }: TaskInputProps) => {
 
   const defaultTags = ['工作', '学习', '生活'];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    
     if (!title.trim()) return;
 
-    onAddTodo({
+    const newTodo: TodoInput = {
       title: title.trim(),
       priority,
       completed: false,
@@ -52,8 +55,9 @@ const TaskInput = ({ onAddTodo }: TaskInputProps) => {
       parentId: undefined,
       isGroup: false,
       reminderSettings: undefined
-    });
+    };
 
+    onAddTodo(newTodo);
     setTitle('');
     setPriority('medium');
     setSelectedTags([]);
@@ -63,7 +67,7 @@ const TaskInput = ({ onAddTodo }: TaskInputProps) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
       <h2 className="text-xl font-bold mb-6">新建任务</h2>
-      <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex gap-3">
           {Object.entries(priorityConfig).map(([key, config]) => {
             const Icon = config.icon;
@@ -95,9 +99,7 @@ const TaskInput = ({ onAddTodo }: TaskInputProps) => {
             onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                if (title.trim()) {
-                  handleSubmit(e);
-                }
+                handleSubmit();
               }
             }}
             placeholder="输入任务内容，按回车键快速创建..."
@@ -109,7 +111,7 @@ const TaskInput = ({ onAddTodo }: TaskInputProps) => {
               dark:group-hover:border-gray-500 text-base"
           />
           <button
-            onClick={handleSubmit}
+            type="submit"
             disabled={!title.trim()}
             className="absolute right-2 top-1/2 -translate-y-1/2
               w-8 h-8 flex items-center justify-center
@@ -146,7 +148,14 @@ const TaskInput = ({ onAddTodo }: TaskInputProps) => {
         </div>
 
         <div className="text-sm text-gray-500">
-          当前选择：<span className="text-yellow-500">中优先级</span>
+          当前选择：
+          <span className={`${
+            priority === 'high' ? 'text-red-500' :
+            priority === 'medium' ? 'text-yellow-500' :
+            'text-blue-500'
+          }`}>
+            {priorityConfig[priority].label}
+          </span>
           {selectedTags.length > 0 && (
             <> · <span className="text-blue-500">{selectedTags.join(', ')}</span></>
           )}
@@ -155,7 +164,7 @@ const TaskInput = ({ onAddTodo }: TaskInputProps) => {
         <div className="text-sm text-gray-400">
           提示：选择优先级并输入任务内容，按回车键快速创建任务
         </div>
-      </div>
+      </form>
     </div>
   );
 };

@@ -4,16 +4,6 @@ export interface Todo {
   description?: string;
   completed: boolean;
   completedAt?: string;
-<<<<<<< HEAD
-  createdAt: string;
-  priority: 'high' | 'medium' | 'low';
-  dueDate?: string;
-  tags: string[];
-  deleted: boolean;
-  order: number;
-  subTasks: SubTask[];
-  category?: string;
-=======
   createdAt: Date;
   priority: 'high' | 'medium' | 'low';
   dueDate?: string;
@@ -22,8 +12,6 @@ export interface Todo {
   order: number;
   subTasks?: SubTask[];
   category?: string;
-  deleted?: boolean;
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   
   // 新增字段
   time?: {
@@ -39,17 +27,10 @@ export interface Todo {
       longitude: number;
     };
   };
-<<<<<<< HEAD
-  parentId?: string;
-  isGroup?: boolean;
-  reminderSettings?: {
-    before: number;
-=======
   parentId?: string; // 用于支持任务分组
   isGroup?: boolean; // 标记是否为任务组
   reminderSettings?: {
     before: number; // 提前提醒的分钟数
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     repeat?: 'daily' | 'weekly' | 'monthly' | 'none';
   };
 }
@@ -84,11 +65,10 @@ export interface Project {
   id: string;
   name: string;
   color: string;
-<<<<<<< HEAD
 }
 
-interface TaskInputProps {
-  onAddTodo: (todo: Omit<Todo, 'id' | 'createdAt' | 'deleted'>) => void;
-=======
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
+export type TodoInput = Omit<Todo, 'id' | 'createdAt' | 'deleted' | 'order'>;
+
+export interface TaskInputProps {
+  onAddTodo: (todo: TodoInput) => void;
 } 

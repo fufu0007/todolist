@@ -5,7 +5,7 @@ import TaskList from './TaskList';
 import TaskInput from './TaskInput';
 import TaskStats from './TaskStats';
 import { useCallback } from 'react';
-import { Todo } from '../types/todo';
+import { Todo, TodoInput } from '../types/todo';
 
 // 加载状态组件
 function LoadingState() {
@@ -19,7 +19,6 @@ function LoadingState() {
 }
 
 export default function HomeContent() {
-<<<<<<< HEAD
   const { 
     todos, 
     sessions, 
@@ -31,70 +30,16 @@ export default function HomeContent() {
     permanentDeleteTodo 
   } = useTodo();
   
-  const handleAddTodo = useCallback((todo: Omit<Todo, 'id' | 'order' | 'createdAt' | 'deleted'>) => {
+  const handleAddTodo = useCallback((todo: TodoInput) => {
     addTodo(todo);
   }, [addTodo]);
-=======
-  const { state, dispatch } = useTodo();
-  
-  // 使用 state.todos 替代直接的 todos
-  const todos = state.todos;
-  
-  const addTodo = useCallback((todo: Omit<Todo, 'id' | 'createdAt' | 'deleted'>) => {
-    const newTodo: Todo = {
-      ...todo,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      deleted: false,
-      order: todos.length
-    };
-    dispatch({ type: 'ADD_TODO', payload: newTodo });
-  }, [dispatch, todos.length]);
-
-  const updateTodo = useCallback((id: string, updates: Partial<Todo>) => {
-    dispatch({ 
-      type: 'UPDATE_TODO', 
-      payload: { 
-        id, 
-        data: updates 
-      }
-    });
-  }, [dispatch]);
-
-  const deleteTodo = useCallback((id: string) => {
-    dispatch({ type: 'DELETE_TODO', payload: id });
-  }, [dispatch]);
-
-  const restoreTodo = useCallback((id: string) => {
-    dispatch({ type: 'RESTORE_TODO', payload: id });
-  }, [dispatch]);
-
-  const permanentDeleteTodo = useCallback((id: string) => {
-    dispatch({ type: 'PERMANENT_DELETE_TODO', payload: id });
-  }, [dispatch]);
-
-  const sessions = state.sessions;
-  const isLoading = state.isLoading;
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
   // 添加批量更新函数
   const onBatchUpdate = useCallback((updates: { id: string; data: Partial<Todo> }[]) => {
     updates.forEach(update => {
-<<<<<<< HEAD
       updateTodo(update.id, update.data);
     });
   }, [updateTodo]);
-=======
-      dispatch({
-        type: 'UPDATE_TODO',
-        payload: {
-          id: update.id,
-          data: update.data
-        }
-      });
-    });
-  }, [dispatch]);
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
   // 添加重新排序函数
   const onReorderTodos = useCallback((startIndex: number, endIndex: number) => {
@@ -123,11 +68,7 @@ export default function HomeContent() {
     <main className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-6">
         <TaskStats todos={todos} sessions={sessions} />
-<<<<<<< HEAD
         <TaskInput onAddTodo={handleAddTodo} />
-=======
-        <TaskInput onAddTodo={addTodo} />
->>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
         <TaskList
           todos={todos}
           onUpdateTodo={updateTodo}
