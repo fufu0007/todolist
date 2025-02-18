@@ -1,6 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
+<<<<<<< HEAD
+=======
+import type { Todo } from '../types/todo';
+import type { PomodoroSession } from '../types/pomodoro';
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
 interface ActivityRingsProps {
   size: number;
@@ -14,7 +19,11 @@ interface ActivityRingsProps {
 export default function ActivityRings({ size, data }: ActivityRingsProps) {
   const rings = useMemo(() => {
     // 检查是否有任何数据
+<<<<<<< HEAD
     const hasData = data.todos > 0 || data.sessions > 0 || data.focus > 0;
+=======
+    const hasData = data.todos > 0 || data.sessions > 0;
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     
     // 如果没有数据，所有环都返回0
     if (!hasData) {
@@ -25,12 +34,32 @@ export default function ActivityRings({ size, data }: ActivityRingsProps) {
       ];
     }
 
+<<<<<<< HEAD
     return [
       { rate: data.todos * 100, color: 'red', empty: false },
       { rate: data.focus * 100, color: 'green', empty: false },
       { rate: data.sessions * 100, color: 'blue', empty: false }
     ];
   }, [data]);
+=======
+    // 有数据时的正常计算
+    const completedRate = data.todos > 0 
+      ? (data.todos / data.todos) * 100 
+      : 0;
+
+    const focusMinutes = data.sessions > 0 ? data.sessions : 0;
+    const focusRate = Math.min((focusMinutes / 120) * 100, 100);
+
+    const sessionCount = data.sessions > 0 ? 1 : 0;
+    const sessionRate = Math.min((sessionCount / 8) * 100, 100);
+
+    return [
+      { rate: completedRate, color: 'red', empty: false },
+      { rate: focusRate, color: 'green', empty: false },
+      { rate: sessionRate, color: 'blue', empty: false }
+    ];
+  }, [data.todos, data.sessions]);
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
   const center = size / 2;
   const strokeWidth = size * 0.15;

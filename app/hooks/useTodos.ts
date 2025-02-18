@@ -14,6 +14,7 @@ export const useTodos = () => {
     localStorage.setItem('todos', JSON.stringify(todos));
   }, [todos]);
 
+<<<<<<< HEAD
   const addTodo = useCallback((todo: Omit<Todo, 'id' | 'order' | 'createdAt' | 'deleted'>) => {
     // 添加调试日志
     console.log('Received todo in useTodos:', todo);
@@ -37,6 +38,17 @@ export const useTodos = () => {
     
     setTodos(prev => [newTodo, ...prev]);
   }, [todos.length]);
+=======
+  const addTodo = useCallback((todo: Omit<Todo, 'id' | 'createdAt' | 'deleted'>) => {
+    const newTodo: Todo = {
+      ...todo,
+      id: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      deleted: false
+    };
+    setTodos(prev => [newTodo, ...prev]);
+  }, []);
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
   const updateTodo = useCallback((id: string, updates: Partial<Todo>) => {
     setTodos(prev => prev.map(todo => 
@@ -60,6 +72,7 @@ export const useTodos = () => {
     setTodos(prev => prev.filter(todo => todo.id !== id));
   }, []);
 
+<<<<<<< HEAD
   const batchUpdate = useCallback((updates: { id: string; data: Partial<Todo> }[]) => {
     setTodos(prev => prev.map(todo => {
       const update = updates.find(u => u.id === todo.id);
@@ -67,6 +80,12 @@ export const useTodos = () => {
         return { ...todo, ...update.data };
       }
       return todo;
+=======
+  const batchUpdate = useCallback((updates: { id: string; updates: Partial<Todo> }[]) => {
+    setTodos(prev => prev.map(todo => {
+      const update = updates.find(u => u.id === todo.id);
+      return update ? { ...todo, ...update.updates } : todo;
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     }));
   }, []);
 

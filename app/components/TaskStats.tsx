@@ -10,6 +10,7 @@ interface TaskStatsProps {
   sessions: PomodoroSession[];
 }
 
+<<<<<<< HEAD
 type TimeRange = '今日' | '本周' | '本月';
 
 interface PeriodStats {
@@ -20,6 +21,23 @@ interface PeriodStats {
   completionRate?: number;
 }
 
+=======
+interface DailyStats {
+  active: number;
+  completed: number;
+  total: number;
+  completionRate: number;
+}
+
+interface StatsChanges {
+  active: number;
+  completed: number;
+  completionRate: number;
+}
+
+type TimeRange = '今日' | '本周' | '本月';
+
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 export default function TaskStats({ todos, sessions }: TaskStatsProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('本周');
 
@@ -65,19 +83,31 @@ export default function TaskStats({ todos, sessions }: TaskStatsProps) {
     });
 
     // 当前时间段的统计
+<<<<<<< HEAD
     const currentStats: PeriodStats = {
       active: periodTodos.filter(todo => !todo.completed).length,
       completed: periodTodos.filter(todo => todo.completed).length,
       total: periodTodos.length,
       focusMinutes: periodSessions.reduce((acc, session) => acc + session.duration, 0),
       completionRate: 0
+=======
+    const currentStats = {
+      active: periodTodos.filter(todo => !todo.completed).length,
+      completed: periodTodos.filter(todo => todo.completed).length,
+      total: periodTodos.length,
+      focusMinutes: periodSessions.reduce((acc, session) => acc + session.duration, 0)
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     };
     currentStats.completionRate = currentStats.total > 0 
       ? (currentStats.completed / currentStats.total) * 100 
       : 0;
 
     // 比较时间段的统计
+<<<<<<< HEAD
     const compareStats: PeriodStats = {
+=======
+    const compareStats = {
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
       active: comparePeriodTodos.filter(todo => !todo.completed).length,
       completed: comparePeriodTodos.filter(todo => todo.completed).length,
       total: comparePeriodTodos.length,
@@ -86,8 +116,12 @@ export default function TaskStats({ todos, sessions }: TaskStatsProps) {
           const sessionDate = new Date(session.startTime);
           return sessionDate >= compareDate && sessionDate < startDate;
         })
+<<<<<<< HEAD
         .reduce((acc, session) => acc + session.duration, 0),
       completionRate: 0
+=======
+        .reduce((acc, session) => acc + session.duration, 0)
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     };
 
     // 计算变化率
@@ -185,7 +219,11 @@ export default function TaskStats({ todos, sessions }: TaskStatsProps) {
         {/* 完成率 */}
         <div className="bg-purple-50/50 dark:bg-purple-900/10 rounded-xl p-4">
           <div className="text-4xl font-bold text-purple-500 mb-1">
+<<<<<<< HEAD
             {stats.current.completionRate?.toFixed(0) || '0%'}
+=======
+            {stats.current.completionRate.toFixed(0)}%
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
           </div>
           <div className="text-sm text-gray-600 dark:text-gray-400">
             完成率

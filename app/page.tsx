@@ -1,8 +1,11 @@
 'use client';
 
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import { Github } from 'lucide-react';
 import Image from 'next/image';
+=======
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 import TaskInput from './components/TaskInput';
 import TaskList from './components/TaskList';
 import Calendar from './components/Calendar';
@@ -12,8 +15,12 @@ import TaskAnalytics from './components/TaskAnalytics';
 import DayTimeline from './components/DayTimeline';
 import { useTodos } from './hooks/useTodos';
 import { usePomodoroSessions } from './hooks/usePomodoroSessions';
+<<<<<<< HEAD
 import wechatQR from './wechat.jpg';  // 确保图片在 app 目录下
 import Script from 'next/script';
+=======
+import { useState } from 'react';
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
 export default function Home() {
   const {
@@ -34,6 +41,7 @@ export default function Home() {
   } = usePomodoroSessions();
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+<<<<<<< HEAD
   const [showWechat, setShowWechat] = useState(false);
 
   const structuredData = {
@@ -167,5 +175,59 @@ export default function Home() {
         </div>
       </main>
     </>
+=======
+
+  return (
+    <main className="container mx-auto p-4 max-w-6xl">
+      <h1 className="text-5xl font-bold text-gray-900 dark:text-gray-200 mb-8 text-center">
+        专注清单
+        <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-3">
+          保持专注，提升效率
+        </span>
+      </h1>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <TaskStats 
+            todos={todos}
+            sessions={sessions}
+          />
+          <TaskInput onAddTodo={addTodo} />
+          <TaskList
+            todos={todos}
+            onUpdateTodo={updateTodo}
+            onDeleteTodo={deleteTodo}
+            onRestoreTodo={restoreTodo}
+            onPermanentDelete={permanentDelete}
+            onBatchUpdate={batchUpdate}
+            onReorderTodos={reorderTodos}
+          />
+          <div className="grid grid-cols-1 gap-6">
+            <TaskAnalytics 
+              todos={todos}
+              sessions={sessions}
+            />
+            <DayTimeline 
+              todos={todos}
+              sessions={sessions}
+            />
+          </div>
+        </div>
+        <div className="space-y-6">
+          <PomodoroTimer
+            onComplete={handlePomodoroComplete}
+            onSessionComplete={handleSessionComplete}
+            sessions={sessions}
+          />
+          <Calendar
+            currentDate={new Date()}
+            todos={todos}
+            sessions={sessions}
+            selectedDate={selectedDate}
+            onDateSelect={(date) => setSelectedDate(date)}
+          />
+        </div>
+      </div>
+    </main>
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   );
 }

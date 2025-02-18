@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+<<<<<<< HEAD
 import { RotateCcw, Settings, Volume2, VolumeX, X, SkipForward } from 'lucide-react';
+=======
+import { Play, Pause, RotateCcw, Settings, Volume2, VolumeX, X, SkipForward } from 'lucide-react';
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 import type { PomodoroSession } from '../types/pomodoro';
 import { Switch } from '@headlessui/react';
 
@@ -130,7 +134,11 @@ const DEFAULT_SETTINGS: TimerSettings = {
   shortBreakTime: 5,
   longBreakTime: 15,
   roundsBeforeLongBreak: 4,
+<<<<<<< HEAD
   notificationSound: 'simple',
+=======
+  notificationSound: 'bell',
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   notificationDuration: 1,
   muted: false
 };
@@ -146,6 +154,7 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
       return DEFAULT_SETTINGS;
     }
   });
+<<<<<<< HEAD
 
   // 从 localStorage 恢复状态
   const [currentMode, setCurrentMode] = useState<TimerMode>(() => {
@@ -202,6 +211,18 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     }
   }, [currentMode, currentRound, timeLeft, isRunning, sessionStartTime]);
 
+=======
+  
+  const [currentMode, setCurrentMode] = useState<TimerMode>('focus');
+  const [currentRound, setCurrentRound] = useState(1);
+  const [timeLeft, setTimeLeft] = useState(() => settings.focusTime * 60);
+  const [isRunning, setIsRunning] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   const totalDuration = useMemo(() => {
     switch (currentMode) {
       case 'focus':
@@ -213,6 +234,7 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     }
   }, [currentMode, settings]);
 
+<<<<<<< HEAD
   const createSession = useCallback((completed: boolean) => {
     const now = new Date();
     const session: PomodoroSession = {
@@ -254,6 +276,52 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     localStorage.removeItem('pomodoroStartTime');
   }, [currentMode, currentRound, timeLeft, settings.focusTime, settings.shortBreakTime, 
       settings.longBreakTime, settings.roundsBeforeLongBreak]);
+=======
+  const createSession = useCallback((isCompleted: boolean): PomodoroSession => {
+    if (!sessionStartTime) {
+      throw new Error('Session start time is not set');
+    }
+
+    const session: PomodoroSession = {
+      id: crypto.randomUUID(),
+      type: currentMode,
+      startTime: sessionStartTime,
+      endTime: new Date(),
+      duration: Math.ceil((totalDuration - timeLeft) / 60),
+      completed: isCompleted,
+      taskId: selectedTaskId || undefined
+    };
+
+    return session;
+  }, [sessionStartTime, currentMode, totalDuration, timeLeft, selectedTaskId]);
+
+  const handleModeSwitch = useCallback(() => {
+    let nextMode: TimerMode;
+    let nextRound = currentRound;
+
+    if (currentMode === 'focus') {
+      if (currentRound < settings.roundsBeforeLongBreak) {
+        nextMode = 'shortBreak';
+        nextRound = currentRound + 1;
+      } else {
+        nextMode = 'longBreak';
+        nextRound = 1;
+      }
+    } else {
+      nextMode = 'focus';
+    }
+
+    setCurrentMode(nextMode);
+    setCurrentRound(nextRound);
+    setTimeLeft(
+      nextMode === 'focus' ? settings.focusTime * 60 :
+      nextMode === 'shortBreak' ? settings.shortBreakTime * 60 :
+      settings.longBreakTime * 60
+    );
+    setIsRunning(false);
+    setSessionStartTime(null);
+  }, [currentMode, currentRound, settings]);
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
   const createNotificationSound = useCallback((type: NotificationSound, duration: number = 0.5): OscillatorNode | null => {
     if (typeof window === 'undefined') return null;
@@ -318,6 +386,7 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
   const playNotification = useCallback(() => {
     if (!soundEnabled || settings.muted) return;
     
+<<<<<<< HEAD
     let count = 0;
     const playInterval = setInterval(() => {
       if (count >= 3) {
@@ -347,6 +416,26 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
 
     return () => clearInterval(playInterval);
   }, [soundEnabled, settings.muted, settings.notificationSound, currentMode, createNotificationSound]);
+=======
+    const osc = createNotificationSound(settings.notificationSound, settings.notificationDuration);
+    if (osc) {
+      osc.start();
+      setTimeout(() => {
+        try {
+          osc.stop();
+          if (Notification.permission === 'granted') {
+            new Notification('番茄钟提醒', {
+              body: currentMode === 'focus' ? '专注时间结束！' : '休息时间结束！',
+              icon: '/favicon.ico'
+            });
+          }
+        } catch (error) {
+          console.error('Error stopping notification:', error);
+        }
+      }, settings.notificationDuration * 1000);
+    }
+  }, [soundEnabled, settings.muted, settings.notificationSound, settings.notificationDuration, currentMode, createNotificationSound]);
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
   const toggleTimer = useCallback(() => {
     if (!isRunning) {
@@ -377,6 +466,7 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     setSessionStartTime(null);
     setSelectedTaskId(null);
 
+<<<<<<< HEAD
     // 清除所有存储的状态
     localStorage.removeItem('pomodoroMode');
     localStorage.removeItem('pomodoroTimeLeft');
@@ -384,11 +474,14 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     localStorage.removeItem('pomodoroStartTime');
     localStorage.removeItem('pomodoroRound');
 
+=======
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     if (soundEnabled && !settings.muted) {
       playSound('simple', 0.2);
     }
   }, [isRunning, sessionStartTime, settings.focusTime, soundEnabled, settings.muted, createSession, onSessionComplete, playSound]);
 
+<<<<<<< HEAD
   const skipCurrentPhase = useCallback(() => {
     if (isRunning && sessionStartTime) {
       const session = createSession(false);
@@ -403,11 +496,14 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
   }, [isRunning, sessionStartTime, soundEnabled, settings.muted, createSession, onSessionComplete, handleModeSwitch, playSound]);
 
   // 计时器逻辑
+=======
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   useEffect(() => {
     if (!isRunning) return;
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
+<<<<<<< HEAD
         // 在倒计时最后3秒开始播放提示音
         if (prev <= 3 && prev > 0 && soundEnabled && !settings.muted) {
           playSound(settings.notificationSound, 0.3);
@@ -415,11 +511,24 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
         
         if (prev <= 1) {
           clearInterval(timer);
+=======
+        if (prev <= 1) {
+          clearInterval(timer);
+          
+          if (soundEnabled && !settings.muted) {
+            playNotification();
+          }
+
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
           if (currentMode === 'focus' && sessionStartTime) {
             const session = createSession(true);
             onSessionComplete(session);
             onComplete(session.duration);
           }
+<<<<<<< HEAD
+=======
+
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
           handleModeSwitch();
           return 0;
         }
@@ -428,8 +537,12 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     }, 1000);
 
     return () => clearInterval(timer);
+<<<<<<< HEAD
   }, [isRunning, currentMode, sessionStartTime, soundEnabled, settings.muted, 
       handleModeSwitch, createSession, onComplete, onSessionComplete, playSound, settings.notificationSound]);
+=======
+  }, [isRunning, currentMode, sessionStartTime, soundEnabled, settings.muted, handleModeSwitch, createSession, onComplete, onSessionComplete, playNotification]);
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
   const formatTime = useCallback((seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -612,6 +725,7 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* 底部添加重置按钮 */}
           <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
             <button
@@ -631,6 +745,25 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
             >
               保存设置
+=======
+          {/* 保存按钮 */}
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              onClick={() => setShowSettings(false)}
+              className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+            >
+              取消
+            </button>
+            <button
+              onClick={() => {
+                setSettings(settings);
+                localStorage.setItem('pomodoroSettings', JSON.stringify(settings));
+                setShowSettings(false);
+              }}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              保存
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
             </button>
           </div>
         </div>
@@ -676,6 +809,7 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
               {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             </button>
             <button
+<<<<<<< HEAD
               onClick={skipCurrentPhase}
               className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               title="跳过当前阶段"
@@ -683,6 +817,8 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
               <SkipForward className="w-5 h-5" />
             </button>
             <button
+=======
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
               onClick={resetTimer}
               className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               title="重新开始"

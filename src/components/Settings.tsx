@@ -6,6 +6,7 @@ interface SettingsProps {
   pomodoroTime: number;
   shortBreakTime: number;
   longBreakTime: number;
+<<<<<<< HEAD
   onPomodoroTimeChange: (time: number | null) => void;
   onShortBreakTimeChange: (time: number | null) => void;
   onLongBreakTimeChange: (time: number | null) => void;
@@ -13,6 +14,15 @@ interface SettingsProps {
   alarmDuration: number;
   onAlarmSoundChange: (sound: string) => void;
   onAlarmDurationChange: (duration: number | null) => void;
+=======
+  onPomodoroTimeChange: (time: number) => void;
+  onShortBreakTimeChange: (time: number) => void;
+  onLongBreakTimeChange: (time: number) => void;
+  alarmSound: string;
+  alarmDuration: number;
+  onAlarmSoundChange: (sound: string) => void;
+  onAlarmDurationChange: (duration: number) => void;
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 }
 
 const Settings: React.FC<SettingsProps> = ({

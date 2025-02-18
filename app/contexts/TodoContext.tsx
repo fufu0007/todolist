@@ -22,6 +22,7 @@ type TodoAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null };
 
+<<<<<<< HEAD
 interface TodoContextValue {
   todos: Todo[];
   sessions: PomodoroSession[];
@@ -35,6 +36,8 @@ interface TodoContextValue {
   addSession: (session: Omit<PomodoroSession, 'id'>) => void;
 }
 
+=======
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 const initialState: TodoState = {
   todos: [],
   sessions: [],
@@ -125,7 +128,14 @@ function todoReducer(state: TodoState, action: TodoAction): TodoState {
   }
 }
 
+<<<<<<< HEAD
 const TodoContext = createContext<TodoContextValue | undefined>(undefined);
+=======
+const TodoContext = createContext<{
+  state: TodoState;
+  dispatch: React.Dispatch<TodoAction>;
+} | undefined>(undefined);
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
 export function TodoProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(todoReducer, initialState);
@@ -164,11 +174,16 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.todos, state.sessions, state.isLoading]);
 
+<<<<<<< HEAD
   const value: TodoContextValue = {
+=======
+  const value = {
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     todos: state.todos,
     sessions: state.sessions,
     isLoading: state.isLoading,
     error: state.error,
+<<<<<<< HEAD
     addTodo: useCallback((todoData: Omit<Todo, 'id' | 'order' | 'createdAt' | 'deleted'>) => {
       const newTodo: Todo = {
         ...todoData,
@@ -179,6 +194,18 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
       };
       dispatch({ type: 'ADD_TODO', payload: newTodo });
     }, [state.todos.length]),
+=======
+    addTodo: useCallback((todoData: Omit<Todo, 'id' | 'createdAt' | 'completed' | 'deleted'>) => {
+      const newTodo: Todo = {
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        completed: false,
+        deleted: false,
+        ...todoData
+      };
+      dispatch({ type: 'ADD_TODO', payload: newTodo });
+    }, []),
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     updateTodo: useCallback((id: string, data: Partial<Todo>) => {
       dispatch({ type: 'UPDATE_TODO', payload: { id, data } });
     }, []),

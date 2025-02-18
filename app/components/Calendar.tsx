@@ -1,9 +1,30 @@
 'use client';
 
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from 'date-fns';
+<<<<<<< HEAD
 import ActivityRings from './ActivityRings';
 import type { Todo } from '../types/todo';
 import type { PomodoroSession } from '../types/pomodoro';
+=======
+import { zhCN } from 'date-fns/locale';
+import ActivityRings from './ActivityRings';
+
+// 添加类型定义
+interface Todo {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: Date;
+  priority: 'high' | 'medium' | 'low';
+}
+
+interface PomodoroSession {
+  id: string;
+  startTime: Date;
+  duration: number;
+  taskId?: string;
+}
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
 interface CalendarProps {
   currentDate: Date;
@@ -129,7 +150,11 @@ export default function Calendar({ currentDate, todos, sessions, onDateSelect, s
                     <ActivityRings
                       size={24}
                       data={{
+<<<<<<< HEAD
                         todos: dateData.stats.completed / Math.max(dateData.stats.completed + dateData.stats.pending, 1),
+=======
+                        todos: dateData.stats.completed / (dateData.stats.completed + dateData.stats.pending || 1),
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
                         focus: Math.min(dateData.stats.focusTime / 240, 1), // 4小时为满值
                         sessions: Math.min(dateData.stats.focusCount / 8, 1) // 8次为满值
                       }}

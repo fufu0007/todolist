@@ -96,7 +96,11 @@ const TodoItem = ({
         {todo.location && (
           <MapPin size={16} className="text-gray-400" />
         )}
+<<<<<<< HEAD
         {todo.reminderSettings && (
+=======
+        {todo.reminder && (
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
           <Bell size={16} className="text-gray-400" />
         )}
         

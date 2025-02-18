@@ -3,11 +3,20 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
   Trash2, CheckCircle2, Circle, AlertTriangle, Clock, 
+<<<<<<< HEAD
   Pencil, X, ChevronDown, RotateCcw, Plus, 
   User, ShoppingCart, Heart, BookOpen, Tag,
   Search, ArrowUpNarrowWide, ArrowDownNarrowWide, ArrowDown
 } from 'lucide-react';
 import type { Todo, SubTask } from '../types/todo';
+=======
+  CheckCircle, Pencil, X, Save, ArrowUp, ArrowDown,
+  Trash, Calendar, MapPin, Bell, ChevronRight, ChevronDown, RotateCcw, MoreVertical, Plus, ArrowDown as ArrowDownIcon,
+  Archive, RefreshCcw, Filter, SortAsc, SortDesc, Search, AlertCircle, Flag, ListTodo, ArrowUpNarrowWide, ArrowDownNarrowWide,
+  User, ShoppingCart, Heart, BookOpen, Tag
+} from 'lucide-react';
+import type { Todo } from '../types/todo';
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
 interface TaskListProps {
@@ -16,7 +25,11 @@ interface TaskListProps {
   onDeleteTodo: (id: string) => void;
   onRestoreTodo: (id: string) => void;
   onPermanentDelete: (id: string) => void;
+<<<<<<< HEAD
   onBatchUpdate: (updates: { id: string; data: Partial<Todo> }[]) => void;
+=======
+  onBatchUpdate: (updates: { id: string; updates: Partial<Todo> }[]) => void;
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   onReorderTodos: (startIndex: number, endIndex: number) => void;
 }
 
@@ -38,6 +51,21 @@ const tagColors = {
   default: 'bg-gray-100 text-gray-600 dark:bg-gray-700/30 dark:text-gray-400'
 } as const;
 
+<<<<<<< HEAD
+=======
+interface SubTask {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: string;
+  completedAt?: string;
+}
+
+interface TaskWithSubTasks extends Todo {
+  subTasks?: SubTask[];
+}
+
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 const tagIcons = {
   work: Clock,
   personal: User,
@@ -64,7 +92,15 @@ export default function TaskList({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedPriority, setSelectedPriority] = useState<'low' | 'medium' | 'high' | 'all'>('all');
+<<<<<<< HEAD
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+=======
+
+  // 展开状态管理
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+
+  // 子任务相关状态
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   const [editingSubTask, setEditingSubTask] = useState<{taskId: string, subTaskId?: string}>();
   const [subTaskInput, setSubTaskInput] = useState('');
 
@@ -99,6 +135,7 @@ export default function TaskList({
     }
   };
 
+<<<<<<< HEAD
   // 处理任务完成状态切换
   const handleToggleTodo = useCallback((id: string, completed: boolean) => {
     onUpdateTodo(id, { 
@@ -119,6 +156,16 @@ export default function TaskList({
     onUpdateTodo(taskId, { subTasks: updatedSubTasks });
   }, [todos, onUpdateTodo]);
 
+=======
+  // 切换任务完成状态
+  const handleToggleComplete = useCallback((id: string, completed: boolean) => {
+    onUpdateTodo(id, {
+      completed,
+      completedAt: completed ? new Date().toISOString() : undefined
+    });
+  }, [onUpdateTodo]);
+
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   // 开始编辑子任务
   const handleStartEditSubTask = (taskId: string, subTask?: SubTask) => {
     setEditingSubTask({ taskId, subTaskId: subTask?.id });
@@ -168,9 +215,31 @@ export default function TaskList({
     setSubTaskInput('');
   }, [editingSubTask, subTaskInput, todos, onUpdateTodo]);
 
+<<<<<<< HEAD
   // 删除子任务
   const handleDeleteSubTask = useCallback((taskId: string, subTaskId: string) => {
     const task = todos.find(t => t.id === taskId) as Todo;
+=======
+  // 切换子任务完成状态
+  const handleToggleSubTask = useCallback((todoId: string, subTaskId: string, completed: boolean) => {
+    const todo = todos.find(t => t.id === todoId);
+    if (!todo?.subTasks) return;
+
+    const updatedSubTasks = todo.subTasks.map(st => 
+      st.id === subTaskId ? {
+        ...st,
+        completed,
+        completedAt: completed ? new Date().toISOString() : undefined
+      } : st
+    );
+
+    onUpdateTodo(todoId, { subTasks: updatedSubTasks });
+  }, [todos, onUpdateTodo]);
+
+  // 删除子任务
+  const handleDeleteSubTask = useCallback((taskId: string, subTaskId: string) => {
+    const task = todos.find(t => t.id === taskId) as TaskWithSubTasks;
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     const updatedSubTasks = task.subTasks?.filter(st => st.id !== subTaskId);
     
     onUpdateTodo(taskId, { subTasks: updatedSubTasks });
@@ -246,12 +315,19 @@ export default function TaskList({
   }, [todos]);
 
   // 获取所有可用的标签
+<<<<<<< HEAD
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     todos.forEach(todo => {
       if (todo.tags && todo.tags.length > 0) {
         todo.tags.forEach(tag => tagSet.add(tag));
       }
+=======
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    todos.forEach(todo => {
+      todo.tags?.forEach(tag => tagSet.add(tag));
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     });
     return Array.from(tagSet);
   }, [todos]);
@@ -275,7 +351,11 @@ export default function TaskList({
 
         // 标签过滤
         const tagMatch = selectedTags.length === 0 || 
+<<<<<<< HEAD
           (todo.tags && todo.tags.length > 0 && selectedTags.every(tag => todo.tags!.includes(tag)));
+=======
+          (todo.tags && selectedTags.every(tag => todo.tags.includes(tag)));
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
         // 优先级过滤
         const priorityMatch = selectedPriority === 'all' || todo.priority === selectedPriority;
@@ -283,6 +363,12 @@ export default function TaskList({
         return statusMatch && matchesSearch && tagMatch && priorityMatch;
       });
 
+<<<<<<< HEAD
+=======
+      // 只保留主任务（非子任务）
+      filtered = filtered.filter(todo => !todo.parentId);
+
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
       // 排序
       return filtered.sort((a, b) => {
         if (!a || !b) return 0;
@@ -317,6 +403,7 @@ export default function TaskList({
     }
   }, [todos, filter, sort, sortDirection, searchQuery, selectedTags, selectedPriority]);
 
+<<<<<<< HEAD
   // 初始化展开状态
   useEffect(() => {
     setExpandedTasks(new Set(
@@ -343,6 +430,8 @@ export default function TaskList({
     setExpandedTasks(new Set(tasksWithSubTasks.map(todo => todo.id)));
   }, [todos]);
 
+=======
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   // 渲染批量操作按钮
   const renderBatchActions = () => {
     if (filteredAndSortedTodos.length === 0) return null;
@@ -425,7 +514,11 @@ export default function TaskList({
           onBatchUpdate(
             uncompletedTodos.map(todo => ({
               id: todo.id,
+<<<<<<< HEAD
               data: { 
+=======
+              updates: { 
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
                 completed: true,
                 completedAt: new Date().toISOString()
               }
@@ -442,7 +535,11 @@ export default function TaskList({
           onBatchUpdate(
             undeletedTodos.map(todo => ({
               id: todo.id,
+<<<<<<< HEAD
               data: { deleted: true }
+=======
+              updates: { deleted: true }
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
             }))
           );
         }
@@ -456,7 +553,11 @@ export default function TaskList({
           onBatchUpdate(
             deletedTodos.map(todo => ({
               id: todo.id,
+<<<<<<< HEAD
               data: { deleted: false }
+=======
+              updates: { deleted: false }
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
             }))
           );
         }
@@ -496,6 +597,29 @@ export default function TaskList({
     }
   };
 
+<<<<<<< HEAD
+=======
+  // 切换任务展开状态
+  const toggleTaskExpand = useCallback((id: string) => {
+    setExpandedTasks(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  // 初始化展开状态
+  useEffect(() => {
+    setExpandedTasks(new Set(
+      todos.filter(todo => todo.subTasks && todo.subTasks.length > 0).map(todo => todo.id)
+    ));
+  }, [todos]);
+
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   // 格式化时间显示
   const formatDateTime = useCallback((date: string, time?: string | undefined, isAllDay?: boolean) => {
     if (!date) return '';
@@ -568,7 +692,11 @@ export default function TaskList({
           <div className="flex items-start gap-3">
             <div className="flex items-center gap-3 flex-1">
             <button
+<<<<<<< HEAD
                 onClick={() => handleToggleTodo(todo.id, !todo.completed)}
+=======
+                onClick={() => handleToggleComplete(todo.id, !todo.completed)}
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
               className={`flex-shrink-0 transition-colors ${
                 todo.completed 
                   ? 'text-green-500 hover:text-green-600' 
@@ -720,6 +848,7 @@ export default function TaskList({
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* 子任务区域和添加子任务按钮 */}
           {(expandedTasks.has(todo.id) || editingSubTask?.taskId === todo.id) ? (
             <div className="mt-2 ml-8 space-y-2">
@@ -791,14 +920,97 @@ export default function TaskList({
               {editingSubTask?.taskId === todo.id ? (
                 <div className="flex items-center gap-3">
                   <Circle className="w-4 h-4 text-gray-400" />
+=======
+          {/* 子任务区域 */}
+          {(expandedTasks.has(todo.id) || editingSubTask?.taskId === todo.id) && (
+            <>
+          {/* 子任务列表 */}
+          {todo.subTasks && todo.subTasks.length > 0 && (
+            <div className="mt-3 ml-8 space-y-2 border-l-2 border-gray-100 
+              dark:border-gray-700 pl-4"
+            >
+              {todo.subTasks.map(subTask => (
+                <div
+                  key={subTask.id}
+                      className="flex items-center gap-3 group/subtask 
+                        hover:bg-gray-50 dark:hover:bg-gray-700/50 
+                        rounded-md py-1 px-2 -ml-2 transition-colors"
+                >
+                  <button
+                    onClick={() => handleToggleSubTask(todo.id, subTask.id, !subTask.completed)}
+                    className={`flex-shrink-0 transition-colors ${
+                      subTask.completed 
+                        ? 'text-green-500 hover:text-green-600' 
+                        : 'text-gray-400 hover:text-gray-500'
+                    }`}
+                  >
+                    {subTask.completed ? (
+                      <CheckCircle2 className="w-4 h-4" />
+                    ) : (
+                      <Circle className="w-4 h-4" />
+                    )}
+                  </button>
+
+                  <span className={`flex-1 text-sm ${
+                    subTask.completed 
+                      ? 'text-gray-400 line-through' 
+                      : 'text-gray-600 dark:text-gray-300'
+                  }`}>
+                    {subTask.title}
+                  </span>
+
+                  <div className="flex items-center gap-1 opacity-0 
+                    group-hover/subtask:opacity-100 transition-opacity"
+                  >
+                    <button
+                      onClick={() => {
+                        setEditingSubTask({ 
+                          taskId: todo.id, 
+                          subTaskId: subTask.id 
+                        });
+                        setSubTaskInput(subTask.title);
+                      }}
+                      className="p-1 text-gray-400 hover:text-gray-600 
+                            dark:hover:text-gray-300 rounded-full 
+                            hover:bg-gray-100 dark:hover:bg-gray-600"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSubTask(todo.id, subTask.id)}
+                          className="p-1 text-gray-400 hover:text-red-500 
+                            rounded-full hover:bg-red-50 
+                            dark:hover:bg-red-500/10"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+              )}
+
+              {/* 子任务添加/编辑区域 */}
+              {editingSubTask?.taskId === todo.id ? (
+                <div className="mt-2 ml-8 flex items-center gap-2">
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
                   <input
                     type="text"
                     value={subTaskInput}
                     onChange={(e) => setSubTaskInput(e.target.value)}
+<<<<<<< HEAD
+=======
+                    placeholder="添加子任务..."
+                    className="flex-1 px-3 py-1.5 text-sm border border-gray-200 
+                      dark:border-gray-600 rounded-lg bg-gray-50 
+                      dark:bg-gray-700 focus:ring-2 focus:ring-blue-500/20 
+                      focus:border-blue-500 transition-all"
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
                         handleSaveSubTask(todo.id);
+<<<<<<< HEAD
                       }
                     }}
                     placeholder="添加子任务..."
@@ -807,10 +1019,26 @@ export default function TaskList({
                       focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 
                       dark:focus:ring-blue-400/20 dark:focus:border-blue-400 
                       outline-none transition-all"
+=======
+                      } else if (e.key === 'Escape') {
+                        setEditingSubTask(undefined);
+                        setSubTaskInput('');
+                      }
+                    }}
+                    onBlur={() => {
+                      if (subTaskInput.trim()) {
+                        handleSaveSubTask(todo.id);
+                      } else {
+                        setEditingSubTask(undefined);
+                        setSubTaskInput('');
+                      }
+                    }}
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
                     autoFocus
                   />
                 </div>
               ) : (
+<<<<<<< HEAD
                 <button
                   onClick={() => handleStartEditSubTask(todo.id)}
                   className="flex items-center gap-2 px-3 py-2 text-sm text-blue-600 
@@ -840,6 +1068,23 @@ export default function TaskList({
                 <span>添加子任务</span>
               </button>
             </div>
+=======
+                expandedTasks.has(todo.id) && (
+                  <button
+                    onClick={() => handleStartEditSubTask(todo.id)}
+                    className="mt-2 ml-8 flex items-center gap-2 text-sm 
+                      text-gray-500 hover:text-gray-700 dark:text-gray-400 
+                      dark:hover:text-gray-200 hover:bg-gray-50 
+                      dark:hover:bg-gray-700/50 rounded-md py-1 px-2 
+                      transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    添加子任务
+                  </button>
+                )
+              )}
+            </>
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
           )}
         </div>
       )}
@@ -888,7 +1133,11 @@ export default function TaskList({
             <div className="flex-1 flex items-start sm:items-center gap-2">
               <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">标签:</span>
               <div className="flex flex-wrap gap-1">
+<<<<<<< HEAD
                 {allTags.map(tag => {
+=======
+                {availableTags.map(tag => {
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
                   const TagIcon = tagIcons[tag as keyof typeof tagIcons] || tagIcons.default;
                   return (
                     <button

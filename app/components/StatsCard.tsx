@@ -40,7 +40,10 @@ export default function StatsCard({
       priority: selectedPriority,
       tags: [selectedTag],
       completed: false,
+<<<<<<< HEAD
       deleted: false,
+=======
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
       order: Date.now(),
       subTasks: []
     });

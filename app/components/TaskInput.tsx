@@ -92,10 +92,21 @@ const TaskInput = ({ onAddTodo }: TaskInputProps) => {
             type="text"
             value={title}
             onChange={e => setTitle(e.target.value)}
-            placeholder="输入任务内容，按回车快速创建..."
-            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 
-              rounded-xl text-sm placeholder:text-gray-400
-              focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (title.trim()) {
+                  handleSubmit(e);
+                }
+              }
+            }}
+            placeholder="输入任务内容，按回车键快速创建..."
+            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 
+              rounded-xl border-2 border-gray-200 dark:border-gray-600
+              focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 
+              dark:focus:ring-blue-400/20 dark:focus:border-blue-400
+              outline-none transition-all group-hover:border-gray-300
+              dark:group-hover:border-gray-500 text-base"
           />
           <button
             onClick={handleSubmit}
@@ -149,4 +160,4 @@ const TaskInput = ({ onAddTodo }: TaskInputProps) => {
   );
 };
 
-export default TaskInput; 
+export default TaskInput;

@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { PomodoroSession } from '../types/pomodoro';
+<<<<<<< HEAD
 import { usePomodoroState } from './usePomodoroState';
+=======
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
 export const usePomodoroSessions = () => {
   const [sessions, setSessions] = useState<PomodoroSession[]>(() => {

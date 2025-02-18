@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useCallback } from 'react';
 import Settings from './components/Settings';
 
@@ -44,6 +45,21 @@ const App: React.FC = () => {
       alarmDuration={alarmDuration}
       onAlarmSoundChange={setAlarmSound}
       onAlarmDurationChange={handleAlarmDurationChange}
+=======
+import React, { useState } from 'react';
+import Settings from './components/Settings';
+
+const App: React.FC = () => {
+  const [alarmSound, setAlarmSound] = useState<string>('bell');
+  const [alarmDuration, setAlarmDuration] = useState<number>(3);
+
+  return (
+    <Settings
+      alarmSound={alarmSound}
+      alarmDuration={alarmDuration}
+      onAlarmSoundChange={setAlarmSound}
+      onAlarmDurationChange={setAlarmDuration}
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
     />
   );
 };

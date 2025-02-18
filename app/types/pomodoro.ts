@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export interface PomodoroState {
   currentMode: 'focus' | 'shortBreak' | 'longBreak';
   timeLeft: number;
@@ -7,11 +8,14 @@ export interface PomodoroState {
   selectedTaskId: string | null;
 }
 
+=======
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 export interface PomodoroSettings {
   focusTime: number;
   shortBreakTime: number;
   longBreakTime: number;
   cyclesBeforeLongBreak: number;
+<<<<<<< HEAD
   notificationSound: NotificationSound;
   notificationDuration: number;
   muted: boolean;
@@ -19,6 +23,11 @@ export interface PomodoroSettings {
 
 export type PomodoroType = 'focus' | 'shortBreak' | 'longBreak';
 export type NotificationSound = 'simple' | 'bell' | 'digital' | 'chime';
+=======
+}
+
+export type PomodoroType = 'focus' | 'shortBreak' | 'longBreak';
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
 
 export interface PomodoroSession {
   id: string;

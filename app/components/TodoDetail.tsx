@@ -11,11 +11,15 @@ interface TodoDetailProps {
 }
 
 export default function TodoDetail({ todo, onClose, onUpdate }: TodoDetailProps) {
+<<<<<<< HEAD
   const [editedTodo, setEditedTodo] = useState<Todo>({
     ...todo,
     subTasks: todo.subTasks || [],
     tags: todo.tags || []
   });
+=======
+  const [editedTodo, setEditedTodo] = useState<Todo>(todo);
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
   const [newSubTask, setNewSubTask] = useState('');
   const [newTag, setNewTag] = useState('');
 
@@ -24,8 +28,12 @@ export default function TodoDetail({ todo, onClose, onUpdate }: TodoDetailProps)
       const subTask: SubTask = {
         id: Date.now().toString(),
         title: newSubTask,
+<<<<<<< HEAD
         completed: false,
         createdAt: new Date().toISOString()
+=======
+        completed: false
+>>>>>>> d4e05389d0aa99b6da108c95fc57c4791620fe08
       };
       setEditedTodo({
         ...editedTodo,
