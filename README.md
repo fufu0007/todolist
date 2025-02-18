@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+echo '# 专注时钟 (Pomodoro Timer)
 
-## Getting Started
+一个优雅的番茄工作法应用，帮助你保持专注和高效工作。
 
-First, run the development server:
+## ✨ 特性
 
-```bash
+### 🎯 专注计时
+- 可自定义专注时长、短休息和长休息时间
+- 自动切换工作和休息模式
+- 优雅的圆环进度显示
+- 支持暂停、继续和重置
+- 智能会话记录和统计
+
+### 🔔 提示系统
+- 内置 4 种独特提示音效
+  - 清脆提示：简单清晰的单音提示
+  - 双音提示：富有韵律的双音组合
+  - 柔和提示：渐弱式的温和提醒
+  - 提醒音：清脆的三角波提示
+- 可调节提示音持续时间
+- 系统通知支持
+
+### 🌊 白噪音集成
+- 精选 5 种白噪音源
+  - 城市雨声
+  - 林间风声
+  - 深夜蝉鸣
+  - 瀑布声
+  - 森林早晨
+- 一键跳转到免费音源
+
+### 🎨 界面设计
+- 响应式设计，支持多种设备
+- 深色模式支持
+- 简洁直观的操作界面
+- 流畅的动画效果
+
+### 💾 数据持久化
+- 自动保存计时器状态
+- 记录专注会话历史
+- 零点自动重置统计
+
+## 🛠 技术特点
+
+- 使用 Next.js 构建，确保最佳性能
+- 采用 Web Audio API 生成音效，无需额外资源
+- 使用 Web Notifications API 实现系统通知
+- TypeScript 确保类型安全
+- Tailwind CSS 实现响应式设计
+- 零外部音频依赖，极低资源占用
+
+## 🚀 性能优化
+
+- 音效系统使用 AudioContext 单例模式
+- 智能资源清理机制
+- 最小化内存占用
+- 快速响应的用户交互
+
+## 💡 使用场景
+
+- 学习：保持专注，提高学习效率
+- 工作：管理时间，避免过度疲劳
+- 写作：保持创作节奏
+- 阅读：专注深度阅读
+- 任何需要时间管理的场景
+
+## 📦 安装与使用
+
+1. 克隆仓库
+bash
+git clone  https://github.com/fufu0007/todolist
+cd pomodoro-timer
+
+2. 安装依赖
+bash
+npm install
+
+3. 运行开发服务器
+bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. 访问应用
+http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🤝 贡献与支持
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 欢迎提交问题和建议
+- 支持多种设备和浏览器
