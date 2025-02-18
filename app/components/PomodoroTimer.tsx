@@ -3,8 +3,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Play, Pause, RotateCcw, Settings, Volume2, VolumeX, X, SkipForward } from 'lucide-react';
 import type { PomodoroSession } from '../types/pomodoro';
+import { Switch } from '@headlessui/react';
 
 type TimerMode = 'focus' | 'shortBreak' | 'longBreak';
+type NotificationSound = 'simple' | 'bell' | 'digital' | 'chime';
 
 interface PomodoroTimerProps {
   onComplete: (minutes: number) => void;
@@ -17,6 +19,9 @@ interface TimerSettings {
   shortBreakTime: number;
   longBreakTime: number;
   roundsBeforeLongBreak: number;
+  notificationSound: NotificationSound;
+  notificationDuration: number;
+  muted: boolean;
 }
 
 interface SoundSettings {
@@ -28,13 +33,6 @@ interface SoundSettings {
 const FOCUS_TIME = 25 * 60; // 25分钟
 const BREAK_TIME = 5 * 60; // 5分钟
 const NOTIFICATION_SOUND = '/notification.mp3'; // 确保添加提示音文件
-
-const NOTIFICATION_SOUNDS = [
-  { id: 'bell', name: '清脆铃声', path: '/sounds/bell.mp3' },
-  { id: 'chime', name: '欢快风铃', path: '/sounds/chime.mp3' },
-  { id: 'marimba', name: '木琴音效', path: '/sounds/marimba.mp3' },
-  { id: 'xylophone', name: '悦耳木琴', path: '/sounds/xylophone.mp3' },
-];
 
 const WHITE_NOISE_SOURCES = [
   { 
@@ -127,63 +125,36 @@ declare global {
   }
 }
 
+const DEFAULT_SETTINGS: TimerSettings = {
+  focusTime: 25,
+  shortBreakTime: 5,
+  longBreakTime: 15,
+  roundsBeforeLongBreak: 4,
+  notificationSound: 'bell',
+  notificationDuration: 1,
+  muted: false
+};
+
 export default function PomodoroTimer({ onComplete, onSessionComplete, sessions }: PomodoroTimerProps) {
-  const [settings, setSettings] = useState<TimerSettings & SoundSettings>(() => {
-    if (typeof window !== 'undefined') {
+  const [settings, setSettings] = useState<TimerSettings>(() => {
+    if (typeof window === 'undefined') return DEFAULT_SETTINGS;
+    try {
       const saved = localStorage.getItem('pomodoroSettings');
-      return saved ? JSON.parse(saved) : {
-        focusTime: 25,
-        shortBreakTime: 5,
-        longBreakTime: 15,
-        roundsBeforeLongBreak: 4,
-        notificationSound: 'simple',
-        notificationDuration: 1.5,
-        muted: false
-      };
+      return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      return DEFAULT_SETTINGS;
     }
-    return {
-      focusTime: 25,
-      shortBreakTime: 5,
-      longBreakTime: 15,
-      roundsBeforeLongBreak: 4,
-      notificationSound: 'simple',
-      notificationDuration: 1.5,
-      muted: false
-    };
   });
-
-  // 临时设置状态，用于编辑但未保存的设置
-  const [tempSettings, setTempSettings] = useState<TimerSettings & SoundSettings>(settings);
-
-  const [currentMode, setCurrentMode] = useState<TimerMode>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pomodoroTimerState');
-      if (saved) {
-        const state = JSON.parse(saved);
-        const savedTime = new Date(state.savedAt).getTime();
-        const now = new Date().getTime();
-        if (now - savedTime < 24 * 60 * 60 * 1000) {
-          return state.currentMode;
-        }
-      }
-    }
-    return 'focus';
-  });
-
-  const [currentRound, setCurrentRound] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pomodoroTimerState');
-      if (saved) {
-        const state = JSON.parse(saved);
-        const savedTime = new Date(state.savedAt).getTime();
-        const now = new Date().getTime();
-        if (now - savedTime < 24 * 60 * 60 * 1000) {
-          return state.currentRound;
-        }
-      }
-    }
-    return 1;
-  });
+  
+  const [currentMode, setCurrentMode] = useState<TimerMode>('focus');
+  const [currentRound, setCurrentRound] = useState(1);
+  const [timeLeft, setTimeLeft] = useState(() => settings.focusTime * 60);
+  const [isRunning, setIsRunning] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const totalDuration = useMemo(() => {
     switch (currentMode) {
@@ -196,304 +167,205 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     }
   }, [currentMode, settings]);
 
-  // 处理模式切换
+  const createSession = useCallback((isCompleted: boolean): PomodoroSession => {
+    if (!sessionStartTime) {
+      throw new Error('Session start time is not set');
+    }
+
+    const session: PomodoroSession = {
+      id: crypto.randomUUID(),
+      type: currentMode,
+      startTime: sessionStartTime,
+      endTime: new Date(),
+      duration: Math.ceil((totalDuration - timeLeft) / 60),
+      completed: isCompleted,
+      taskId: selectedTaskId || undefined
+    };
+
+    return session;
+  }, [sessionStartTime, currentMode, totalDuration, timeLeft, selectedTaskId]);
+
   const handleModeSwitch = useCallback(() => {
+    let nextMode: TimerMode;
+    let nextRound = currentRound;
+
     if (currentMode === 'focus') {
-      if (currentRound % settings.roundsBeforeLongBreak === 0) {
-        setCurrentMode('longBreak');
-        setTimeLeft(settings.longBreakTime * 60);
+      if (currentRound < settings.roundsBeforeLongBreak) {
+        nextMode = 'shortBreak';
+        nextRound = currentRound + 1;
       } else {
-        setCurrentMode('shortBreak');
-        setTimeLeft(settings.shortBreakTime * 60);
+        nextMode = 'longBreak';
+        nextRound = 1;
       }
     } else {
-      setCurrentMode('focus');
-      setTimeLeft(settings.focusTime * 60);
-      if (currentMode === 'longBreak') {
-        setCurrentRound(1);
-      } else {
-        setCurrentRound((prev: number) => prev + 1);
-      }
+      nextMode = 'focus';
     }
+
+    setCurrentMode(nextMode);
+    setCurrentRound(nextRound);
+    setTimeLeft(
+      nextMode === 'focus' ? settings.focusTime * 60 :
+      nextMode === 'shortBreak' ? settings.shortBreakTime * 60 :
+      settings.longBreakTime * 60
+    );
     setIsRunning(false);
     setSessionStartTime(null);
   }, [currentMode, currentRound, settings]);
 
-  // 从 localStorage 恢复计时器状态
-  const [timeLeft, setTimeLeft] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pomodoroTimerState');
-      if (saved) {
-        const state = JSON.parse(saved);
-        const savedTime = new Date(state.savedAt).getTime();
-        const now = new Date().getTime();
-        // 如果保存时间在24小时内，恢复状态
-        if (now - savedTime < 24 * 60 * 60 * 1000) {
-          return state.timeLeft;
-        }
-      }
-    }
-    return settings.focusTime * 60;
-  });
-
-  const [isRunning, setIsRunning] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pomodoroTimerState');
-      if (saved) {
-        const state = JSON.parse(saved);
-        const savedTime = new Date(state.savedAt).getTime();
-        const now = new Date().getTime();
-        if (now - savedTime < 24 * 60 * 60 * 1000) {
-          return state.isRunning;
-        }
-      }
-    }
-    return false;
-  });
-
-  const [sessionStartTime, setSessionStartTime] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pomodoroTimerState');
-      if (saved) {
-        const state = JSON.parse(saved);
-        const savedTime = new Date(state.savedAt).getTime();
-        const now = new Date().getTime();
-        if (now - savedTime < 24 * 60 * 60 * 1000) {
-          return state.sessionStartTime;
-        }
-      }
-    }
-    return null;
-  });
-
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [showSettings, setShowSettings] = useState(false);
-
-  // 恢复运行状态
-  useEffect(() => {
-    let mounted = true;
+  const createNotificationSound = useCallback((type: NotificationSound, duration: number = 0.5): OscillatorNode | null => {
+    if (typeof window === 'undefined') return null;
     
-    const restoreState = () => {
-      if (isRunning && sessionStartTime && mounted) {
-        const now = new Date().getTime();
-        const start = new Date(sessionStartTime).getTime();
-        const elapsed = Math.floor((now - start) / 1000);
-        const newTimeLeft = totalDuration - elapsed;
-        
-        if (newTimeLeft > 0) {
-          setTimeLeft(newTimeLeft);
-        } else {
-          // 如果时间已经结束，触发完成事件
-          const currentSession: PomodoroSession = {
-            id: new Date().toISOString(),
-            type: currentMode,
-            startTime: sessionStartTime,
-            endTime: new Date().toISOString(),
-            duration: Math.ceil(totalDuration / 60),
-            completed: true
-          };
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      switch (type) {
+        case 'simple':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+          break;
+        case 'bell':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+          gain.gain.setValueAtTime(0.4, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+          break;
+        case 'digital':
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(740, ctx.currentTime);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+          break;
+        case 'chime':
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+          break;
+      }
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      return osc;
+    } catch (error) {
+      console.error('Error creating notification sound:', error);
+      return null;
+    }
+  }, []);
+
+  const playSound = useCallback((sound: NotificationSound, duration: number = 0.5) => {
+    if (!soundEnabled || settings.muted) return;
+    
+    const osc = createNotificationSound(sound, duration);
+    if (osc) {
+      osc.start();
+      setTimeout(() => {
+        try {
+          osc.stop();
+        } catch (error) {
+          console.error('Error stopping sound:', error);
+        }
+      }, duration * 1000);
+    }
+  }, [soundEnabled, settings.muted, createNotificationSound]);
+
+  const playNotification = useCallback(() => {
+    if (!soundEnabled || settings.muted) return;
+    
+    const osc = createNotificationSound(settings.notificationSound, settings.notificationDuration);
+    if (osc) {
+      osc.start();
+      setTimeout(() => {
+        try {
+          osc.stop();
+          if (Notification.permission === 'granted') {
+            new Notification('番茄钟提醒', {
+              body: currentMode === 'focus' ? '专注时间结束！' : '休息时间结束！',
+              icon: '/favicon.ico'
+            });
+          }
+        } catch (error) {
+          console.error('Error stopping notification:', error);
+        }
+      }, settings.notificationDuration * 1000);
+    }
+  }, [soundEnabled, settings.muted, settings.notificationSound, settings.notificationDuration, currentMode, createNotificationSound]);
+
+  const toggleTimer = useCallback(() => {
+    if (!isRunning) {
+      setSessionStartTime(prev => prev || new Date());
+      setIsRunning(true);
+      if (soundEnabled && !settings.muted) {
+        playSound('simple', 0.3);
+      }
+    } else {
+      setIsRunning(false);
+      if (sessionStartTime) {
+        const session = createSession(false);
+        onSessionComplete(session);
+      }
+    }
+  }, [isRunning, sessionStartTime, soundEnabled, settings.muted, createSession, onSessionComplete, playSound]);
+
+  const resetTimer = useCallback(() => {
+    if (isRunning && sessionStartTime) {
+      const session = createSession(false);
+      onSessionComplete(session);
+    }
+    
+    setCurrentMode('focus');
+    setCurrentRound(1);
+    setTimeLeft(settings.focusTime * 60);
+    setIsRunning(false);
+    setSessionStartTime(null);
+    setSelectedTaskId(null);
+
+    if (soundEnabled && !settings.muted) {
+      playSound('simple', 0.2);
+    }
+  }, [isRunning, sessionStartTime, settings.focusTime, soundEnabled, settings.muted, createSession, onSessionComplete, playSound]);
+
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
           
-          onSessionComplete(currentSession);
-          onComplete(currentSession.duration);
+          if (soundEnabled && !settings.muted) {
+            playNotification();
+          }
+
+          if (currentMode === 'focus' && sessionStartTime) {
+            const session = createSession(true);
+            onSessionComplete(session);
+            onComplete(session.duration);
+          }
+
           handleModeSwitch();
+          return 0;
         }
-      }
-    };
+        return prev - 1;
+      });
+    }, 1000);
 
-    restoreState();
-    return () => {
-      mounted = false;
-    };
-  }, [isRunning, sessionStartTime, totalDuration, currentMode, onSessionComplete, onComplete, handleModeSwitch]);
+    return () => clearInterval(timer);
+  }, [isRunning, currentMode, sessionStartTime, soundEnabled, settings.muted, handleModeSwitch, createSession, onComplete, onSessionComplete, playNotification]);
 
-  // 保存计时器状态
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const state = {
-        timeLeft,
-        isRunning,
-        currentMode,
-        currentRound,
-        sessionStartTime,
-        savedAt: new Date().toISOString()
-      };
-      localStorage.setItem('pomodoroTimerState', JSON.stringify(state));
-    }
-  }, [timeLeft, isRunning, currentMode, currentRound, sessionStartTime]);
-
-  // 检查零点重置
-  useEffect(() => {
-    const checkMidnight = () => {
-      const now = new Date();
-      if (now.getHours() === 0 && now.getMinutes() === 0) {
-        if (isRunning) {
-          const currentSession: PomodoroSession = {
-            id: new Date().toISOString(),
-            type: currentMode,
-            startTime: sessionStartTime!,
-            endTime: new Date().toISOString(),
-            duration: Math.ceil((totalDuration - timeLeft) / 60),
-            completed: false
-          };
-          onSessionComplete(currentSession);
-        }
-        setTimeLeft(settings.focusTime * 60);
-        setCurrentRound(1);
-        setIsRunning(false);
-        setCurrentMode('focus');
-        setSessionStartTime(null);
-      }
-    };
-
-    const midnightCheck = setInterval(checkMidnight, 1000);
-    return () => clearInterval(midnightCheck);
-  }, [isRunning, currentMode, sessionStartTime, totalDuration, timeLeft, settings, onSessionComplete]);
-
-  // 保存状态到 localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('pomodoroSettings', JSON.stringify(settings));
-    }
-  }, [settings]);
-
-  // 格式化时间显示
   const formatTime = useCallback((seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   }, []);
 
-  // 修改音效预览函数，移除渐变效果
-  const previewSound = useCallback(() => {
-    try {
-      // 如果静音则不播放
-      if (settings.muted) return;
-
-      // 确保 AudioContext 存在
-      if (!window.audioContext || window.audioContext.state === 'closed') {
-        window.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      }
-
-      // 如果 AudioContext 被挂起，则恢复
-      if (window.audioContext.state === 'suspended') {
-        window.audioContext.resume();
-      }
-
-      const sound = ALARM_SOUNDS.find(s => s.id === settings.notificationSound);
-      if (sound) {
-        const { osc, gain } = sound.createSound(window.audioContext);
-        
-        // 连接节点
-        osc.connect(gain);
-        gain.connect(window.audioContext.destination);
-
-        // 开始播放
-        const startTime = window.audioContext.currentTime;
-        osc.start(startTime);
-        
-        // 设置固定音量，不使用渐变
-        gain.gain.setValueAtTime(0.3, startTime);
-        
-        // 停止播放
-        osc.stop(startTime + 1.0);
-
-        // 清理资源
-        osc.onended = () => {
-          try {
-            gain.disconnect();
-            osc.disconnect();
-          } catch (error) {
-            console.error('清理音频资源时出错:', error);
-          }
-        };
-      }
-    } catch (error) {
-      console.error('预览音效错误:', error);
-    }
-  }, [settings.muted]);
-
-  // 修改播放提示音函数，确保使用正确的持续时间
-  const playNotification = useCallback(() => {
-    if (soundEnabled && !settings.muted) {
-      previewSound();
-
-      // 系统通知部分保持不变
-      if (Notification.permission === 'granted') {
-        const notificationTitle = currentMode === 'focus' ? '专注时间结束！' : '休息时间结束！';
-        const notificationBody = currentMode === 'focus' ? '该休息一下了！' : '该开始新的专注了！';
-        
-        new Notification(notificationTitle, {
-          body: notificationBody,
-          icon: '/favicon.ico',
-          silent: true
-        });
-      }
-    }
-  }, [soundEnabled, currentMode, settings.notificationSound, settings.notificationDuration, settings.muted]);
-
-  // 计时器逻辑
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isRunning && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft((prev: number) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && isRunning) {
-      playNotification();
-      const currentSession: PomodoroSession = {
-        id: new Date().toISOString(),
-        type: currentMode,
-        startTime: sessionStartTime!,
-        endTime: new Date().toISOString(),
-        duration: Math.ceil(totalDuration / 60),
-        completed: true
-      };
-      
-      if (onComplete) {
-        onComplete(currentSession.duration);
-      }
-      if (onSessionComplete) {
-        onSessionComplete(currentSession);
-      }
-      handleModeSwitch();
-    }
-    return () => clearInterval(timer);
-  }, [isRunning, timeLeft, totalDuration, handleModeSwitch, onComplete, onSessionComplete, playNotification, currentMode, sessionStartTime]);
-
-  // 开始/暂停计时
-  const toggleTimer = useCallback(() => {
-    if (!isRunning && timeLeft === totalDuration) {
-      // 新的番茄钟开始
-      setSessionStartTime(new Date().toISOString());
-    }
-    setIsRunning((prev: boolean) => !prev);
-  }, [isRunning, timeLeft, totalDuration]);
-
-  // 重置计时器
-  const resetTimer = useCallback(() => {
-    if (isRunning) {
-      // 如果正在运行，记录未完成的会话
-      const currentSession: PomodoroSession = {
-        id: new Date().toISOString(),
-        type: currentMode,
-        startTime: sessionStartTime!,
-        endTime: new Date().toISOString(),
-        duration: Math.ceil((totalDuration - timeLeft) / 60),
-        completed: false
-      };
-      onSessionComplete(currentSession);
-    }
-    setTimeLeft(totalDuration);
-    setIsRunning(false);
-    setSessionStartTime(null);
-  }, [isRunning, currentMode, sessionStartTime, totalDuration, timeLeft, onSessionComplete]);
-
-  // 计算圆环进度
   const calculateProgress = useCallback(() => {
     return ((totalDuration - timeLeft) / totalDuration) * 100;
   }, [timeLeft, totalDuration]);
 
-  // 计算圆环颜色
   const timerColor = useMemo(() => {
     switch (currentMode) {
       case 'focus':
@@ -505,7 +377,6 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     }
   }, [currentMode]);
 
-  // 计算圆环背景色
   const timerBgColor = useMemo(() => {
     switch (currentMode) {
       case 'focus':
@@ -517,7 +388,6 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     }
   }, [currentMode]);
 
-  // 计算模式标题
   const modeTitle = useCallback(() => {
     switch (currentMode) {
       case 'focus':
@@ -529,7 +399,6 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     }
   }, [currentMode]);
 
-  // 计算今日完成的番茄数
   const todayCompletedSessions = useMemo(() => {
     const today = new Date().setHours(0, 0, 0, 0);
     return sessions.filter(session => 
@@ -539,17 +408,15 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     );
   }, [sessions]);
 
-  // 计算总专注时间
-  const totalFocusMinutes = useMemo(() => {
+  const calculateTotalFocusTime = useCallback((sessions: PomodoroSession[]) => {
     return sessions.reduce((total, session) => {
       if (session.completed && session.type === 'focus') {
         return total + session.duration;
       }
       return total;
     }, 0);
-  }, [sessions]);
+  }, []);
 
-  // 计算今日专注数据
   const todayStats = useMemo(() => {
     const today = new Date().setHours(0, 0, 0, 0);
     const todaySessions = sessions.filter(session => 
@@ -565,178 +432,42 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
     };
   }, [sessions]);
 
-  // 键盘快捷键处理
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // 如果在输入框中，不处理快捷键
-      if (e.target instanceof HTMLInputElement) return;
-
-      switch (e.key.toLowerCase()) {
-        case ' ': // 空格键：开始/暂停
-          e.preventDefault();
-          toggleTimer();
-          break;
-        case 'r': // R键：重置
-          if (!e.ctrlKey && !e.metaKey) {
-            e.preventDefault();
-            resetTimer();
-          }
-          break;
-        case 'm': // M键：静音切换
-          e.preventDefault();
-          setSoundEnabled((prev: boolean) => !prev);
-          break;
-        case 'escape': // ESC键：关闭设置
-          if (showSettings) {
-            setShowSettings(false);
-          }
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [toggleTimer, resetTimer, showSettings]);
-
-  // 通知权限检查和请求
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
-
-  useEffect(() => {
-    if ('Notification' in window) {
-      setNotificationPermission(Notification.permission);
-    }
-  }, []);
-
-  const requestNotificationPermission = async () => {
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-    }
-  };
-
-  // 跳过当前阶段
-  const skipSession = useCallback(() => {
-    if (currentMode === 'focus') {
-      if (currentRound % settings.roundsBeforeLongBreak === 0) {
-        setTimeLeft(settings.longBreakTime * 60);
-        setCurrentMode('longBreak');
-      } else {
-        setTimeLeft(settings.shortBreakTime * 60);
-        setCurrentMode('shortBreak');
-      }
-      if (sessionStartTime && onSessionComplete) {
-        onSessionComplete({
-          id: new Date().toISOString(),
-          type: currentMode,
-          startTime: sessionStartTime,
-          endTime: new Date().toISOString(),
-          duration: Math.ceil((totalDuration - timeLeft) / 60),
-          completed: false
-        });
-      }
-    } else {
-      setTimeLeft(settings.focusTime * 60);
-      setCurrentMode('focus');
-      if (currentMode === 'longBreak') {
-        setCurrentRound(1);
-      } else {
-        setCurrentRound((prev: number) => prev + 1);
-      }
-    }
-    setIsRunning(false);
-    setSessionStartTime(null);
-  }, [currentMode, currentRound, settings, sessionStartTime, onSessionComplete, totalDuration, timeLeft]);
-
-  // 保存设置
-  const saveSettings = useCallback((newSettings: TimerSettings & SoundSettings) => {
-    setSettings(newSettings);
-    localStorage.setItem('pomodoroSettings', JSON.stringify(newSettings));
-    
-    // 根据当前模式更新时间
-    if (!isRunning) {
-      switch (currentMode) {
-        case 'focus':
-          setTimeLeft(newSettings.focusTime * 60);
-          break;
-        case 'shortBreak':
-          setTimeLeft(newSettings.shortBreakTime * 60);
-          break;
-        case 'longBreak':
-          setTimeLeft(newSettings.longBreakTime * 60);
-          break;
-      }
-    }
-    
-    setShowSettings(false);
-  }, [isRunning, currentMode]);
-
-  // 重置设置为默认值
-  const resetSettings = useCallback(() => {
-    const defaultSettings = {
-      focusTime: 25,
-      shortBreakTime: 5,
-      longBreakTime: 15,
-      roundsBeforeLongBreak: 4,
-      notificationSound: 'simple',
-      notificationDuration: 1.5,
-      muted: false
-    };
-    setTempSettings(defaultSettings);
-  }, []);
-
-  // 验证是否为当天的会话
-  const isValidSession = useCallback((startTime: string) => {
-    const sessionDate = new Date(startTime);
-    const today = new Date();
-    return sessionDate.toDateString() === today.toDateString();
-  }, []);
-
-  // 修改会话完成逻辑
-  const handleSessionComplete = useCallback((session: PomodoroSession) => {
-    // 只记录当天的会话
-    if (isValidSession(session.startTime)) {
-      onSessionComplete(session);
-      onComplete(session.duration);
-    }
-  }, [onComplete, onSessionComplete, isValidSession]);
-
-  // 修改设置面板组件
-  const SettingsPanel = () => {
-    // 添加临时设置状态
-    const [tempDuration, setTempDuration] = useState(settings.notificationDuration);
-
-    // 计算百分比
-    const durationPercentage = (tempDuration / 3.0) * 100;
-
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-96 max-w-full mx-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              时间设置
-            </h3>
+  const SettingsPanel = () => (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-96 max-w-full m-4">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold">设置</h3>
+          <div className="flex items-center gap-4">
             <button
-              onClick={() => setShowSettings(false)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              onClick={resetTimer}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 
+                dark:hover:text-gray-200"
+              title="重置设置"
             >
+              <RotateCcw className="w-5 h-5" />
+            </button>
+            <button onClick={() => setShowSettings(false)}>
               <X className="w-5 h-5" />
             </button>
           </div>
+        </div>
 
-          {/* 时间设置部分 */}
+        {/* 设置面板内容 */}
+        <div className="space-y-6">
+          {/* 时间设置 */}
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                专注时间 (分钟)
-              </label>
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-medium">专注时长 (分钟)</label>
               <input
                 type="number"
                 min="1"
                 max="60"
                 value={settings.focusTime}
-                onChange={(e) => saveSettings({ ...settings, focusTime: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 
-                  dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100"
+                onChange={(e) => setSettings(prev => ({
+                  ...prev,
+                  focusTime: Math.min(60, Math.max(1, parseInt(e.target.value) || 1))
+                }))}
+                className="w-20 px-2 py-1 border rounded"
               />
             </div>
             <div>
@@ -748,7 +479,7 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
                 min="1"
                 max="30"
                 value={settings.shortBreakTime}
-                onChange={(e) => saveSettings({ ...settings, shortBreakTime: Number(e.target.value) })}
+                onChange={(e) => setSettings(prev => ({ ...prev, shortBreakTime: Number(e.target.value) }))}
                 className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 
                   dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100"
               />
@@ -762,7 +493,7 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
                 min="1"
                 max="60"
                 value={settings.longBreakTime}
-                onChange={(e) => saveSettings({ ...settings, longBreakTime: Number(e.target.value) })}
+                onChange={(e) => setSettings(prev => ({ ...prev, longBreakTime: Number(e.target.value) }))}
                 className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 
                   dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100"
               />
@@ -776,110 +507,59 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
                 min="1"
                 max="10"
                 value={settings.roundsBeforeLongBreak}
-                onChange={(e) => saveSettings({ ...settings, roundsBeforeLongBreak: Number(e.target.value) })}
+                onChange={(e) => setSettings(prev => ({ ...prev, roundsBeforeLongBreak: Number(e.target.value) }))}
                 className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 
                   dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100"
               />
             </div>
+          </div>
 
-            {/* 音效设置部分 */}
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  提示音效
-                </label>
-                <button
-                  onClick={() => setSettings(prev => ({ ...prev, muted: !prev.muted }))}
-                  className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
-                    ${settings.muted ? 'text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}
+          {/* 音效设置 */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium">提示音效</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {['simple', 'bell', 'digital', 'chime'].map((sound) => (
+                <div
+                  key={sound}
+                  onClick={() => {
+                    setSettings(prev => ({ ...prev, notificationSound: sound as NotificationSound }));
+                    playSound(sound as NotificationSound, settings.notificationDuration);
+                  }}
+                  className={`p-3 rounded-lg border text-sm cursor-pointer ${
+                    settings.notificationSound === sound
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:bg-gray-50'
+                  }`}
                 >
-                  {settings.muted ? (
-                    <VolumeX className="w-5 h-5" />
-                  ) : (
-                    <Volume2 className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-2">
-                {ALARM_SOUNDS.map(sound => (
-                  <div
-                    key={sound.id}
-                    onClick={() => {
-                      setSettings(prev => ({ ...prev, notificationSound: sound.id }));
-                      previewSound();
-                    }}
-                    className={`p-3 rounded-lg border text-sm cursor-pointer transition-colors
-                      ${settings.notificationSound === sound.id
-                        ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/30'
-                        : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                      }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span>{sound.name}</span>
-                      <Play className="w-4 h-4" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 提示音持续时间设置 */}
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  提示音持续时间
-                </label>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {durationPercentage.toFixed(0)}%
-                </span>
-              </div>
-              <div className="flex flex-col gap-2">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={durationPercentage}
-                  onChange={(e) => {
-                    const percentage = parseInt(e.target.value);
-                    const newDuration = (percentage / 100) * 3.0;
-                    setTempDuration(newDuration);
-                  }}
-                  onMouseUp={() => {
-                    // 在滑块释放时更新实际设置
-                    setSettings(prev => ({
-                      ...prev,
-                      notificationDuration: tempDuration
-                    }));
-                    // 预览新的持续时间
-                    previewSound();
-                  }}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 px-1">
-                  <span>0%</span>
-                  <span>100%</span>
+                  {sound}
                 </div>
-              </div>
+              ))}
             </div>
+          </div>
 
-            {/* 音效预览按钮 */}
-            <div className="mt-4">
-              <button
-                onClick={previewSound}
-                className="w-full py-2 px-4 bg-blue-50 text-blue-600 rounded-lg
-                  hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 
-                  dark:hover:bg-blue-900/50 transition-colors"
-              >
-                预览当前音效和持续时间
-              </button>
-            </div>
+          {/* 保存按钮 */}
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              onClick={() => setShowSettings(false)}
+              className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+            >
+              取消
+            </button>
+            <button
+              onClick={() => {
+                setSettings(settings);
+                localStorage.setItem('pomodoroSettings', JSON.stringify(settings));
+                setShowSettings(false);
+              }}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              保存
+            </button>
           </div>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
 
   const WhiteNoiseSection = () => (
     <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl p-4">
@@ -907,7 +587,7 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">番茄时钟</h2>
@@ -919,6 +599,13 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
               {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             </button>
             <button
+              onClick={resetTimer}
+              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              title="重新开始"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </button>
+            <button
               onClick={() => setShowSettings(true)}
               className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
@@ -927,7 +614,6 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
           </div>
         </div>
 
-        {/* 番茄进度指示器 */}
         <div className="flex justify-center gap-4 mb-4">
           {Array.from({ length: 4 }).map((_, index) => {
             const isCompleted = index < (currentRound - 1) % 4;
@@ -937,7 +623,6 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
                 key={index}
                 className={`relative w-6 h-6 flex items-center justify-center`}
               >
-                {/* 番茄主体 */}
                 <div
                   className={`w-5 h-5 rounded-full transition-colors ${
                     isCompleted
@@ -947,7 +632,6 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
                       : 'bg-gray-200 dark:bg-gray-700'
                   }`}
                 />
-                {/* 番茄叶子 */}
                 <div
                   className={`absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-3 rounded-t-full rotate-45 transition-colors ${
                     isCompleted
@@ -962,9 +646,7 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
           })}
         </div>
 
-        {/* 圆形计时器 */}
         <div className="relative w-64 h-64 mx-auto">
-          {/* 背景圆环 */}
           <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
             <circle
               className={`${timerBgColor} stroke-current`}
@@ -974,7 +656,6 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
               cx="50"
               cy="50"
             />
-            {/* 进度圆环 */}
             <circle
               className={`${timerColor} stroke-current transition-all duration-1000`}
               strokeWidth="4"
@@ -988,7 +669,6 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
             />
           </svg>
 
-          {/* 中间的时间显示 */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div className={`text-4xl font-bold mb-2 ${timerColor}`}>
               {formatTime(timeLeft)}
@@ -1002,35 +682,27 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
           </div>
         </div>
 
-        {/* 控制按钮 */}
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center space-x-4">
           <button
             onClick={toggleTimer}
-            className={`p-3 rounded-full ${
-              isRunning
-                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                : `${timerColor.replace('text', 'bg')} text-white hover:opacity-90`
-            } transition-colors`}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            {isRunning ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+            {isRunning ? '暂停' : '开始'}
           </button>
           <button
             onClick={resetTimer}
-            className="p-3 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 
-              dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors"
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
           >
-            <RotateCcw className="w-6 h-6" />
+            重置
           </button>
           <button
-            onClick={skipSession}
-            className="p-3 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 
-              dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors"
+            onClick={() => setShowSettings(true)}
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
           >
-            <SkipForward className="w-6 h-6" />
+            设置
           </button>
         </div>
 
-        {/* 今日统计 */}
         <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
           <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
             <span>今日专注</span>
@@ -1044,7 +716,6 @@ export default function PomodoroTimer({ onComplete, onSessionComplete, sessions 
           </div>
         </div>
 
-        {/* 设置面板 */}
         {showSettings && (
           <SettingsPanel />
         )}
